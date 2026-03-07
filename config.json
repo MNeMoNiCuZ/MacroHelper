@@ -1,0 +1,474 @@
+{
+  "pos": [
+    1869,
+    671
+  ],
+  "volume": 0.59,
+  "font_size": 18,
+  "button_width": 119,
+  "button_height": 34,
+  "window_width": 131,
+  "window_height": 342,
+  "voice_rate": 262,
+  "voice_rate_rand": 75,
+  "voice_id": "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\Voices\\Tokens\\TTS_MS_EN-GB_HAZEL_11.0",
+  "arrow_align": "right",
+  "minimize_to_tray": false,
+  "button_gap": 1,
+  "accent_color": "#2c5caa",
+  "font_color": "#ffffff",
+  "race_colors": {
+    "Zerg": {
+      "accent": "#aa557f",
+      "font": "#ffffff"
+    },
+    "Protoss": {
+      "accent": "#41aa9a",
+      "font": "#ffffff"
+    },
+    "Terran": {
+      "accent": "#2c5caa",
+      "font": "#ffffff"
+    }
+  },
+  "include_build_in_overlay": false,
+  "active_race": "Terran",
+  "builds_by_race": {
+    "Zerg": [
+      {
+        "name": "Default",
+        "actions": [
+          {
+            "id": "z_inject",
+            "name": "Inject",
+            "name_expr": "Inject",
+            "name_parts": [
+              "Inject"
+            ],
+            "spoken": "Inject",
+            "spoken_expr": "Inject",
+            "spoken_parts": [
+              "Inject"
+            ],
+            "interval": 29,
+            "initial_delays": [
+              140
+            ],
+            "terminal_zero": false,
+            "time_expr": "140,29"
+          },
+          {
+            "id": "user_1002",
+            "name": "Queen",
+            "name_expr": "Queen",
+            "name_parts": [
+              "Queen"
+            ],
+            "spoken": "Queeen",
+            "spoken_expr": "Queeen",
+            "spoken_parts": [
+              "Queeen"
+            ],
+            "interval": 40,
+            "initial_delays": [
+              110,
+              40,
+              40,
+              40,
+              40,
+              40,
+              40,
+              40,
+              40
+            ],
+            "terminal_zero": true,
+            "time_expr": "110,40,40,40,40,40,40,40,40,0"
+          },
+          {
+            "id": "z_upgrades",
+            "name": "Upgrades",
+            "name_expr": "Upgrades",
+            "name_parts": [
+              "Upgrades"
+            ],
+            "spoken": "Upgrades",
+            "spoken_expr": "Upgrades",
+            "spoken_parts": [
+              "Upgrades"
+            ],
+            "interval": 120,
+            "initial_delays": [
+              240,
+              80
+            ],
+            "terminal_zero": false,
+            "time_expr": "240,80,120"
+          },
+          {
+            "id": "user_1001",
+            "name": "Expand",
+            "name_expr": "Expand",
+            "name_parts": [
+              "Expand"
+            ],
+            "spoken": "Expand",
+            "spoken_expr": "Expand",
+            "spoken_parts": [
+              "Expand"
+            ],
+            "interval": 90,
+            "initial_delays": [
+              45,
+              90,
+              90,
+              90,
+              90,
+              90,
+              90,
+              90,
+              90
+            ],
+            "terminal_zero": true,
+            "time_expr": "45,90,90,90,90,90,90,90,90,0"
+          },
+          {
+            "id": "user_1000",
+            "name": "Pool",
+            "name_expr": "Pool, Tech",
+            "name_parts": [
+              "Pool",
+              "Tech"
+            ],
+            "spoken": "Poool",
+            "spoken_expr": "Poool, Tech",
+            "spoken_parts": [
+              "Poool",
+              "Tech"
+            ],
+            "interval": 120,
+            "initial_delays": [
+              45
+            ],
+            "terminal_zero": false,
+            "time_expr": "45,120"
+          },
+          {
+            "id": "user_1006",
+            "name": "Macro Hatch",
+            "name_expr": "Macro Hatch",
+            "name_parts": [
+              "Macro Hatch"
+            ],
+            "spoken": "Macro Hatchery",
+            "spoken_expr": "Macro Hatchery",
+            "spoken_parts": [
+              "Macro Hatchery"
+            ],
+            "interval": 240,
+            "initial_delays": [
+              240,
+              240
+            ],
+            "terminal_zero": true,
+            "time_expr": "240,240,0"
+          }
+        ]
+      }
+    ],
+    "Protoss": [
+      {
+        "name": "Default",
+        "actions": [
+          {
+            "id": "p_probe",
+            "name": "Probe",
+            "name_expr": "Probe",
+            "name_parts": [
+              "Probe"
+            ],
+            "spoken": "Probe",
+            "spoken_expr": "Probe",
+            "spoken_parts": [
+              "Probe"
+            ],
+            "interval": 12,
+            "initial_delays": [],
+            "terminal_zero": false,
+            "time_expr": "12"
+          },
+          {
+            "id": "user_1007",
+            "name": "Pylon",
+            "name_expr": "Pylon",
+            "name_parts": [
+              "Pylon"
+            ],
+            "spoken": "Pylon",
+            "spoken_expr": "Pylon",
+            "spoken_parts": [
+              "Pylon"
+            ],
+            "interval": 20,
+            "initial_delays": [
+              145
+            ],
+            "terminal_zero": false,
+            "time_expr": "145,20"
+          },
+          {
+            "id": "p_chrono",
+            "name": "Chrono",
+            "name_expr": "Chrono",
+            "name_parts": [
+              "Chrono"
+            ],
+            "spoken": "Chrono Boot",
+            "spoken_expr": "Chrono Boot",
+            "spoken_parts": [
+              "Chrono Boot"
+            ],
+            "interval": 60,
+            "initial_delays": [],
+            "terminal_zero": false,
+            "time_expr": "60"
+          },
+          {
+            "id": "user_1010",
+            "name": "Expand",
+            "name_expr": "Expand",
+            "name_parts": [
+              "Expand"
+            ],
+            "spoken": "Expand",
+            "spoken_expr": "Expand",
+            "spoken_parts": [
+              "Expand"
+            ],
+            "interval": 150,
+            "initial_delays": [
+              70,
+              120
+            ],
+            "terminal_zero": false,
+            "time_expr": "70,120,150"
+          },
+          {
+            "id": "p_upgrades",
+            "name": "Upgrades",
+            "name_expr": "Upgrades",
+            "name_parts": [
+              "Upgrades"
+            ],
+            "spoken": "Upgrades",
+            "spoken_expr": "Upgrades",
+            "spoken_parts": [
+              "Upgrades"
+            ],
+            "interval": 150,
+            "initial_delays": [
+              145,
+              125,
+              150,
+              150,
+              150
+            ],
+            "terminal_zero": true,
+            "time_expr": "145, 125, 150, 150, 150, 0"
+          },
+          {
+            "id": "user_1008",
+            "name": "Tech",
+            "name_expr": "Tech",
+            "name_parts": [
+              "Tech"
+            ],
+            "spoken": "Tech",
+            "spoken_expr": "Tech",
+            "spoken_parts": [
+              "Tech"
+            ],
+            "interval": 60,
+            "initial_delays": [
+              120,
+              60,
+              60
+            ],
+            "terminal_zero": true,
+            "time_expr": "120,60,60,0"
+          },
+          {
+            "id": "user_1009",
+            "name": "Warpgate",
+            "name_expr": "Warpgate",
+            "name_parts": [
+              "Warpgate"
+            ],
+            "spoken": "Warpgate",
+            "spoken_expr": "Warpgate",
+            "spoken_parts": [
+              "Warpgate"
+            ],
+            "interval": 120,
+            "initial_delays": [
+              120
+            ],
+            "terminal_zero": true,
+            "time_expr": "120,0"
+          }
+        ]
+      }
+    ],
+    "Terran": [
+      {
+        "name": "Default",
+        "actions": [
+          {
+            "id": "t_scv",
+            "name": "SCV",
+            "name_expr": "SCV",
+            "name_parts": [
+              "SCV"
+            ],
+            "spoken": "SCV",
+            "spoken_expr": "SCV",
+            "spoken_parts": [
+              "SCV"
+            ],
+            "interval": 12,
+            "initial_delays": [],
+            "terminal_zero": false,
+            "time_expr": "12"
+          },
+          {
+            "id": "t_mule",
+            "name": "MULE",
+            "name_expr": "MULE",
+            "name_parts": [
+              "MULE"
+            ],
+            "spoken": "Mule",
+            "spoken_expr": "Mule",
+            "spoken_parts": [
+              "Mule"
+            ],
+            "interval": 60,
+            "initial_delays": [],
+            "terminal_zero": false,
+            "time_expr": "60"
+          },
+          {
+            "id": "t_supply",
+            "name": "Supply",
+            "name_expr": "Supply",
+            "name_parts": [
+              "Supply"
+            ],
+            "spoken": "Supply Deeepot",
+            "spoken_expr": "Supply Deeepot",
+            "spoken_parts": [
+              "Supply Deeepot"
+            ],
+            "interval": 20,
+            "initial_delays": [
+              120
+            ],
+            "terminal_zero": false,
+            "time_expr": "120,20"
+          },
+          {
+            "id": "user_1003",
+            "name": "Expand",
+            "name_expr": "Expand",
+            "name_parts": [
+              "Expand"
+            ],
+            "spoken": "Expand",
+            "spoken_expr": "Expand",
+            "spoken_parts": [
+              "Expand"
+            ],
+            "interval": 150,
+            "initial_delays": [
+              100,
+              120
+            ],
+            "terminal_zero": false,
+            "time_expr": "100,120,150"
+          },
+          {
+            "id": "t_upgrades",
+            "name": "Upgrades",
+            "name_expr": "Upgrades",
+            "name_parts": [
+              "Upgrades"
+            ],
+            "spoken": "Upgrades",
+            "spoken_expr": "Upgrades",
+            "spoken_parts": [
+              "Upgrades"
+            ],
+            "interval": 140,
+            "initial_delays": [
+              150,
+              120,
+              140,
+              140
+            ],
+            "terminal_zero": true,
+            "time_expr": "150,120,140,140,0"
+          },
+          {
+            "id": "user_1004",
+            "name": "Factory",
+            "name_expr": "Factory, Tech",
+            "name_parts": [
+              "Factory",
+              "Tech"
+            ],
+            "spoken": "Factory",
+            "spoken_expr": "Factory, Tech",
+            "spoken_parts": [
+              "Factory",
+              "Tech"
+            ],
+            "interval": 90,
+            "initial_delays": [
+              91,
+              90,
+              90,
+              90
+            ],
+            "terminal_zero": true,
+            "time_expr": "91,90,90,90,0"
+          },
+          {
+            "id": "user_1005",
+            "name": "Orbital",
+            "name_expr": "Orbital",
+            "name_parts": [
+              "Orbital"
+            ],
+            "spoken": "Orbital",
+            "spoken_expr": "Orbital",
+            "spoken_parts": [
+              "Orbital"
+            ],
+            "interval": 180,
+            "initial_delays": [
+              90,
+              180
+            ],
+            "terminal_zero": true,
+            "time_expr": "90,180,0"
+          }
+        ]
+      }
+    ]
+  },
+  "active_build_by_race": {
+    "Zerg": "Default",
+    "Protoss": "Default",
+    "Terran": "Default"
+  },
+  "next_action_id": 1011
+}
