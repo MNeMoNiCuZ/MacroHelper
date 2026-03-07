@@ -466,6 +466,7 @@ class SettingsWin(QWidget):
         super().__init__(None, Qt.WindowType.Window)
         self.m = m
         self.setWindowTitle("Settings")
+        self.setWindowIcon(m.icon)
         self.setMinimumSize(800, 680)
         self.resize(960, 760)
         self.upd = False
@@ -492,14 +493,18 @@ class SettingsWin(QWidget):
         row_voice.setHorizontalSpacing(10)
         row_voice.setVerticalSpacing(6)
         self.vol = QSlider(Qt.Orientation.Horizontal); self.vol.setRange(0, 100); self.vol.valueChanged.connect(m.update_vol)
+        self.vol.setToolTip("Volume of spoken alarm announcements (0–100%)")
         self.rate = QSlider(Qt.Orientation.Horizontal); self.rate.setRange(100, 500); self.rate.valueChanged.connect(m.update_rate)
+        self.rate.setToolTip("Speech rate of the TTS voice\nHigher = faster speech")
         for s in [self.vol, self.rate]:
             s.setStyleSheet(SLIDER_STYLE)
             s.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.rand = QSpinBox(); self.rand.setRange(0, 500); self.rand.valueChanged.connect(m.update_rate_rand)
         self.rand.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+        self.rand.setToolTip("Randomly vary the speech rate by ±N each alarm fire\nAdds variety to avoid a monotone voice (0 = no randomization)")
         self.voice = QComboBox(); [self.voice.addItem(v["name"], v["id"]) for v in m.voices]
         self.voice.currentIndexChanged.connect(lambda: m.update_voice(self.voice.currentData()))
+        self.voice.setToolTip("Select the text-to-speech voice for alarm announcements")
         self.volv = QLabel(); self.ratev = QLabel()
         row_voice.addWidget(QLabel("Volume"), 0, 0); row_voice.addWidget(self.vol, 0, 1); row_voice.addWidget(self.volv, 0, 2)
         row_voice.addWidget(QLabel("Audio Pitch"), 0, 3); row_voice.addWidget(self.rate, 0, 4); row_voice.addWidget(self.ratev, 0, 5)
@@ -515,9 +520,13 @@ class SettingsWin(QWidget):
         row_size.setHorizontalSpacing(10)
         row_size.setVerticalSpacing(6)
         self.w = QSlider(Qt.Orientation.Horizontal); self.w.setRange(10, 420); self.w.valueChanged.connect(m.update_w)
+        self.w.setToolTip("Width of alarm buttons in the overlay and main window")
         self.h = QSlider(Qt.Orientation.Horizontal); self.h.setRange(10, 90); self.h.valueChanged.connect(m.update_h)
+        self.h.setToolTip("Height of alarm buttons in the overlay and main window")
         self.fs = QSlider(Qt.Orientation.Horizontal); self.fs.setRange(2, 50); self.fs.valueChanged.connect(m.update_fs)
+        self.fs.setToolTip("Font size for button labels")
         self.gap = QSlider(Qt.Orientation.Horizontal); self.gap.setRange(0, 40); self.gap.valueChanged.connect(m.update_gap)
+        self.gap.setToolTip("Vertical spacing in pixels between alarm buttons")
         for s in [self.w, self.h, self.fs, self.gap]:
             s.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             s.setMinimumWidth(80)
@@ -529,19 +538,64 @@ class SettingsWin(QWidget):
         row_size.addWidget(QLabel("Gap"), 0, 9); row_size.addWidget(self.gap, 0, 10); row_size.addWidget(self.gapv, 0, 11)
         row_size.setColumnStretch(1, 2); row_size.setColumnStretch(4, 2); row_size.setColumnStretch(7, 2); row_size.setColumnStretch(10, 2)
         self.align = QComboBox(); self.align.addItem("Arrow Left", "left"); self.align.addItem("Arrow Right", "right")
+        self.align.setToolTip("Side of the overlay where the close-overlay arrow button appears")
         self.align.currentIndexChanged.connect(lambda: m.update_align(self.align.currentData()))
+        tabs_btn = QPushButton("Customize Tabs")
+        tabs_btn.setToolTip("Add, remove, rename, or reorder the tabs in the main window")
+        tabs_btn.clicked.connect(m.open_tabs_dialog)
         row_size.addWidget(QLabel("Arrow"), 1, 0); row_size.addWidget(self.align, 1, 1)
+        row_size.addWidget(tabs_btn, 1, 3, 1, 3)
         root.addLayout(row_size)
 
         # ── Options ──
         lbl_opts = QLabel("Options"); lbl_opts.setStyleSheet(section_hdr)
         root.addWidget(lbl_opts)
-        row_opts = QHBoxLayout()
-        row_opts.setSpacing(16)
-        self.mintray = QCheckBox("Minimize to tray"); self.mintray.stateChanged.connect(lambda: m.set_min_tray(self.mintray.isChecked()))
-        self.overlay_build = QCheckBox("Show Build in Overlay"); self.overlay_build.stateChanged.connect(lambda: m.set_include_build_in_overlay(self.overlay_build.isChecked()))
-        row_opts.addWidget(self.mintray); row_opts.addWidget(self.overlay_build); row_opts.addStretch()
-        root.addLayout(row_opts)
+        opts_grid = QGridLayout()
+        opts_grid.setHorizontalSpacing(20)
+        opts_grid.setVerticalSpacing(2)
+        self.mintray = QCheckBox("Minimize to tray")
+        self.mintray.setToolTip("When minimized, hide to the system tray\ninstead of appearing in the taskbar")
+        self.mintray.stateChanged.connect(lambda: m.set_min_tray(self.mintray.isChecked()))
+        lbl_mintray = QLabel("Hide to tray when minimized.")
+        lbl_mintray.setStyleSheet("color:#8899aa; font-size:11px;")
+        self.overlay_build = QCheckBox("Show Build in Overlay")
+        self.overlay_build.setToolTip("Display a build selector dropdown in the compact overlay window\nOnly visible when multiple builds exist for the current race")
+        self.overlay_build.stateChanged.connect(lambda: m.set_include_build_in_overlay(self.overlay_build.isChecked()))
+        lbl_overlay_build = QLabel("Build dropdown in overlay.")
+        lbl_overlay_build.setStyleSheet("color:#8899aa; font-size:11px;")
+        self.overlay_lock = QCheckBox("Lock Overlay Buttons")
+        self.overlay_lock.setToolTip("In overlay mode, disable all alarm toggle buttons\nOnly PLAY/STOP and Close Overlay remain clickable\nPrevents accidental alarm toggling while playing")
+        self.overlay_lock.stateChanged.connect(lambda: m.set_overlay_buttons_locked(self.overlay_lock.isChecked()))
+        lbl_overlay_lock = QLabel("Disable action buttons in overlay.")
+        lbl_overlay_lock.setStyleSheet("color:#8899aa; font-size:11px;")
+        self.initial_delay_spin = QSpinBox()
+        self.initial_delay_spin.setRange(0, 300)
+        self.initial_delay_spin.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+        self.initial_delay_spin.setFixedWidth(52)
+        self.initial_delay_spin.setToolTip("Seconds to count down before alarms start when PLAY is pressed.\nThe button shows the countdown. Click again to cancel.\nSet to 0 to start instantly.")
+        self.initial_delay_spin.valueChanged.connect(lambda v: m.set_initial_delay(v))
+        delay_ctrl = QWidget()
+        delay_ctrl_l = QHBoxLayout(delay_ctrl)
+        delay_ctrl_l.setContentsMargins(0, 0, 0, 0)
+        delay_ctrl_l.setSpacing(4)
+        lbl_delay_lbl = QLabel("Initial Delay (s):")
+        lbl_delay_lbl.setToolTip("Seconds to count down before PLAY starts all alarms\nUseful to give yourself time to get in-game before alarms begin")
+        delay_ctrl_l.addWidget(lbl_delay_lbl)
+        delay_ctrl_l.addWidget(self.initial_delay_spin)
+        delay_ctrl_l.addStretch()
+        lbl_delay_desc = QLabel("Countdown before PLAY\nactivates alarms (0 = instant).")
+        lbl_delay_desc.setStyleSheet("color:#8899aa; font-size:11px;")
+        opts_grid.addWidget(self.mintray, 0, 0)
+        opts_grid.addWidget(lbl_mintray, 1, 0)
+        opts_grid.addWidget(self.overlay_build, 0, 1)
+        opts_grid.addWidget(lbl_overlay_build, 1, 1)
+        opts_grid.addWidget(self.overlay_lock, 0, 2)
+        opts_grid.addWidget(lbl_overlay_lock, 1, 2)
+        opts_grid.addWidget(delay_ctrl, 0, 3)
+        opts_grid.addWidget(lbl_delay_desc, 1, 3)
+        for c in range(4):
+            opts_grid.setColumnStretch(c, 1)
+        root.addLayout(opts_grid)
 
         # ════════════════════════════════════════
         #  RACE SETTINGS
@@ -555,8 +609,10 @@ class SettingsWin(QWidget):
         row_colors = QHBoxLayout()
         row_colors.setSpacing(12)
         self.color_btn = QPushButton("Accent Color"); self.color_btn.clicked.connect(m.pick_accent_color)
+        self.color_btn.setToolTip("Choose the accent/highlight color for buttons and borders\nEach race can have its own accent color")
         self.color_sw = QLabel(); self.color_sw.setFixedSize(18, 18)
         self.fcolor_btn = QPushButton("Font Color"); self.fcolor_btn.clicked.connect(m.pick_font_color)
+        self.fcolor_btn.setToolTip("Choose the text color for all buttons\nEach race can have its own font color")
         self.fcolor_sw = QLabel(); self.fcolor_sw.setFixedSize(18, 18)
         row_colors.addWidget(self.color_btn); row_colors.addWidget(self.color_sw)
         row_colors.addWidget(self.fcolor_btn); row_colors.addWidget(self.fcolor_sw)
@@ -588,11 +644,12 @@ class SettingsWin(QWidget):
         # ── Alarms ──
         lbl_alarms = QLabel("Alarms"); lbl_alarms.setStyleSheet(section_hdr)
         root.addWidget(lbl_alarms)
-        self.tbl = QTableWidget(); self.tbl.setColumnCount(6); self.tbl.setHorizontalHeaderLabels(["Button Name", "Spoken Text", "Time (s)", "Up", "Down", "Remove"])
+        self.tbl = QTableWidget(); self.tbl.setColumnCount(7); self.tbl.setHorizontalHeaderLabels(["Button Name", "Spoken Text", "Time (s)", "Play", "Up", "Down", "Remove"])
         hdr = self.tbl.horizontalHeader()
         hdr.setStretchLastSection(False)
         hdr.setSectionResizeMode(0, hdr.ResizeMode.Stretch); hdr.setSectionResizeMode(1, hdr.ResizeMode.Stretch)
-        hdr.setSectionResizeMode(2, hdr.ResizeMode.Stretch); hdr.setSectionResizeMode(3, hdr.ResizeMode.ResizeToContents); hdr.setSectionResizeMode(4, hdr.ResizeMode.ResizeToContents); hdr.setSectionResizeMode(5, hdr.ResizeMode.ResizeToContents)
+        hdr.setSectionResizeMode(2, hdr.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(3, hdr.ResizeMode.ResizeToContents); hdr.setSectionResizeMode(4, hdr.ResizeMode.ResizeToContents); hdr.setSectionResizeMode(5, hdr.ResizeMode.ResizeToContents); hdr.setSectionResizeMode(6, hdr.ResizeMode.ResizeToContents)
         hi0 = QTableWidgetItem("Button Name"); hi0.setToolTip("Display name shown on the button\nUse commas for sequential names that\ncycle with each alarm firing")
         hi1 = QTableWidgetItem("Spoken Text"); hi1.setToolTip("Text spoken aloud when the alarm fires\nUse commas for sequential texts that\ncycle with each alarm firing")
         hi2 = QTableWidgetItem("Time (s)"); hi2.setToolTip("Alarm timing in seconds\nExamples:\n  29 = Repeat every 29 seconds\n  140,29 = Wait 2m 20s, then every 29s\n  45,90,0 = At 45s, then 90s, then stop")
@@ -670,6 +727,8 @@ class SettingsWin(QWidget):
         self.rate.setValue(m.voice_rate); self.ratev.setText(str(m.voice_rate)); self.rand.setValue(m.voice_rate_rand)
         self.mintray.setChecked(m.min_to_tray)
         self.overlay_build.setChecked(m.include_build_in_overlay)
+        self.overlay_lock.setChecked(m.overlay_buttons_locked)
+        self.initial_delay_spin.setValue(m.initial_delay)
         self.gap.setValue(m.btn_gap); self.gapv.setText(str(m.btn_gap))
         self.color_sw.setStyleSheet(f"background:{m.accent_color}; border:1px solid #777; border-radius:3px;")
         self.fcolor_sw.setStyleSheet(f"background:{m.font_color}; border:1px solid #777; border-radius:3px;")
@@ -719,12 +778,14 @@ class SettingsWin(QWidget):
             desc = format_time_description(a.get("time_expr", time_text))
             it.setToolTip(desc if desc else time_text)
             self.tbl.setItem(r, 2, it)
+            pl = DragBtn("\u25B6"); pl.setFixedSize(28, 22); pl.setToolTip("Preview: speak this alarm's text now"); pl.clicked.connect(lambda checked=False, aid=a["id"]: self.play_spoken(aid))
             up = DragBtn("\u2191"); up.setFixedSize(28, 22); up.clicked.connect(lambda checked=False, aid=a["id"]: self.move_up(aid))
             dn = DragBtn("\u2193"); dn.setFixedSize(28, 22); dn.clicked.connect(lambda checked=False, aid=a["id"]: self.move_down(aid))
             rm = DragBtn("X"); rm.setFixedSize(28, 22); rm.clicked.connect(lambda checked=False, aid=a["id"]: self.rm(aid))
-            self.tbl.setCellWidget(r, 3, up)
-            self.tbl.setCellWidget(r, 4, dn)
-            self.tbl.setCellWidget(r, 5, rm)
+            self.tbl.setCellWidget(r, 3, pl)
+            self.tbl.setCellWidget(r, 4, up)
+            self.tbl.setCellWidget(r, 5, dn)
+            self.tbl.setCellWidget(r, 6, rm)
         self.upd = False
 
     def cell_changed(self, r: int, c: int):
@@ -768,17 +829,25 @@ class SettingsWin(QWidget):
     def rm(self, aid: str):
         self.m.remove_action(aid); self.refresh()
 
+    def play_spoken(self, aid: str):
+        a = self.m.find(aid)
+        if not a:
+            return
+        m = self.m
+        delta = random.randint(-m.voice_rate_rand, m.voice_rate_rand) if m.voice_rate_rand > 0 else 0
+        speak(a.get("spoken", a.get("name", "")), m.volume, max(100, min(1000, m.voice_rate + delta)), m.voice_id)
+
     def move_up(self, aid: str):
         moved = self.m.reorder_action(aid, -1)
         self.refresh()
         if moved:
-            QTimer.singleShot(0, lambda: self._move_cursor_to_cell(aid, 3))
+            QTimer.singleShot(0, lambda: self._move_cursor_to_cell(aid, 4))
 
     def move_down(self, aid: str):
         moved = self.m.reorder_action(aid, 1)
         self.refresh()
         if moved:
-            QTimer.singleShot(0, lambda: self._move_cursor_to_cell(aid, 4))
+            QTimer.singleShot(0, lambda: self._move_cursor_to_cell(aid, 5))
 
     def _move_cursor_to_cell(self, aid: str, col: int):
         idx = next((i for i, x in enumerate(self.row_ids) if x == aid), -1)
@@ -790,19 +859,158 @@ class SettingsWin(QWidget):
             QCursor.setPos(pos)
 
 
+class TabsDialog(QWidget):
+    def __init__(self, m: "Main"):
+        super().__init__(None, Qt.WindowType.Window)
+        self.setWindowTitle("Customize Tabs")
+        self.setWindowIcon(m.icon)
+        self.setMinimumWidth(500)
+        self.m = m
+        self.races = list(m.races)
+        self.names = list(m.tab_names)
+        self.abbrevs = list(m.tab_abbrevs)
+        self._building = False
+
+        lay = QVBoxLayout(self)
+        lay.setSpacing(8)
+
+        info = QLabel("Customize the tabs shown in the main window.\nDisplay Name: shown on the tab.  Short Name: used when the window is narrow.")
+        info.setStyleSheet("color:#8899aa; font-size:11px;")
+        info.setWordWrap(True)
+        lay.addWidget(info)
+
+        self.tbl = QTableWidget()
+        self.tbl.setColumnCount(5)
+        self.tbl.setHorizontalHeaderLabels(["Display Name", "Short Name", "↑", "↓", "Remove"])
+        hdr = self.tbl.horizontalHeader()
+        hdr.setStretchLastSection(False)
+        hdr.setSectionResizeMode(0, hdr.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(1, hdr.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(2, hdr.ResizeMode.ResizeToContents)
+        hdr.setSectionResizeMode(3, hdr.ResizeMode.ResizeToContents)
+        hdr.setSectionResizeMode(4, hdr.ResizeMode.ResizeToContents)
+        self.tbl.cellChanged.connect(self._cell_changed)
+        lay.addWidget(self.tbl, 1)
+        self._rebuild_table()
+
+        add_row = QHBoxLayout()
+        add_row.setSpacing(6)
+        self.new_name = QLineEdit(); self.new_name.setPlaceholderText("New tab name")
+        self.new_name.returnPressed.connect(self._add)
+        self.new_abbrev = QLineEdit(); self.new_abbrev.setPlaceholderText("Short"); self.new_abbrev.setFixedWidth(60); self.new_abbrev.setMaxLength(4)
+        self.new_abbrev.setToolTip("Short name shown when the window is too narrow for the full name (max 4 chars)")
+        add_btn = QPushButton("Add Tab"); add_btn.clicked.connect(self._add)
+        add_row.addWidget(QLabel("Name:")); add_row.addWidget(self.new_name, 2)
+        add_row.addWidget(QLabel("Short:")); add_row.addWidget(self.new_abbrev); add_row.addWidget(add_btn)
+        lay.addLayout(add_row)
+
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        ok_btn = QPushButton("OK"); ok_btn.clicked.connect(self._ok)
+        cancel_btn = QPushButton("Cancel"); cancel_btn.clicked.connect(self.close)
+        btn_row.addWidget(ok_btn); btn_row.addWidget(cancel_btn)
+        lay.addLayout(btn_row)
+
+    def _rebuild_table(self):
+        self._building = True
+        self.tbl.setRowCount(len(self.names))
+        for r in range(len(self.names)):
+            ni = QTableWidgetItem(self.names[r])
+            ai = QTableWidgetItem(self.abbrevs[r])
+            self.tbl.setItem(r, 0, ni)
+            self.tbl.setItem(r, 1, ai)
+            up_btn = QPushButton("↑"); up_btn.setFixedSize(28, 22)
+            up_btn.clicked.connect(lambda checked=False, i=r: self._move(i, -1))
+            dn_btn = QPushButton("↓"); dn_btn.setFixedSize(28, 22)
+            dn_btn.clicked.connect(lambda checked=False, i=r: self._move(i, 1))
+            rm_btn = QPushButton("✕"); rm_btn.setFixedSize(28, 22)
+            rm_btn.setEnabled(len(self.names) > 1)
+            rm_btn.setToolTip("Remove this tab (all its builds and alarms will be lost)")
+            rm_btn.clicked.connect(lambda checked=False, i=r: self._remove(i))
+            self.tbl.setCellWidget(r, 2, up_btn)
+            self.tbl.setCellWidget(r, 3, dn_btn)
+            self.tbl.setCellWidget(r, 4, rm_btn)
+        self._building = False
+
+    def _cell_changed(self, r: int, c: int):
+        if self._building:
+            return
+        if c == 0 and r < len(self.names):
+            val = (self.tbl.item(r, 0).text() or "").strip()
+            if val:
+                self.names[r] = val
+        elif c == 1 and r < len(self.abbrevs):
+            val = (self.tbl.item(r, 1).text() or "").strip()
+            self.abbrevs[r] = val or self.names[r][:1]
+
+    def _move(self, i: int, delta: int):
+        j = i + delta
+        if 0 <= j < len(self.races):
+            for lst in (self.races, self.names, self.abbrevs):
+                lst[i], lst[j] = lst[j], lst[i]
+            self._rebuild_table()
+
+    def _remove(self, i: int):
+        if len(self.races) <= 1:
+            return
+        race = self.races[i]
+        has_data = bool(self.m.builds.get(race, [{}])[0].get("actions"))
+        if has_data:
+            confirm = QMessageBox.question(self, "Remove Tab",
+                f"Remove tab '{self.names[i]}'?\nAll its builds and alarms will be permanently deleted.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+            if confirm != QMessageBox.StandardButton.Yes:
+                return
+        self.races.pop(i); self.names.pop(i); self.abbrevs.pop(i)
+        self._rebuild_table()
+
+    def _add(self):
+        name = self.new_name.text().strip()
+        if not name:
+            return
+        if name in self.races:
+            QMessageBox.warning(self, "Duplicate", f"A tab named '{name}' already exists.")
+            return
+        abbrev = self.new_abbrev.text().strip() or name[:1]
+        self.races.append(name); self.names.append(name); self.abbrevs.append(abbrev)
+        self.new_name.clear(); self.new_abbrev.clear()
+        self._rebuild_table()
+
+    def _ok(self):
+        for r in range(len(self.names)):
+            item0 = self.tbl.item(r, 0); item1 = self.tbl.item(r, 1)
+            if item0:
+                val = item0.text().strip()
+                if val: self.names[r] = val
+            if item1:
+                val = item1.text().strip()
+                self.abbrevs[r] = val or self.names[r][:1]
+        if not all(n.strip() for n in self.names):
+            QMessageBox.warning(self, "Invalid", "All tabs must have a display name.")
+            return
+        self.m.apply_tab_config(self.races, self.names, self.abbrevs)
+        self.close()
+
+
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Macro Reminders")
+        self.setWindowTitle("MacroHelper")
         self.setMinimumSize(120, 180)
         self.setWindowFlags(Qt.WindowType.Window)
 
         self.races = ["Zerg", "Protoss", "Terran"]; self.active_race = "Zerg"
+        self.tab_names = list(self.races)
+        self.tab_abbrevs = ["Z", "P", "T"]
         self.volume = 1.0; self.fs = 14; self.bw = 240; self.bh = 42; self.voice_rate = 200; self.voice_rate_rand = 0
         self.voices = voices(); self.voice_id = self.voices[0]["id"] if self.voices else None
         self.arrow_align = "left"; self.min_to_tray = True; self.btn_gap = 4; self.accent_color = "#00b7ff"; self.font_color = "#ffffff"; self.quitting = False; self.next_id = 1000
         self.include_build_in_overlay = False
-        self.race_colors: Dict[str, dict] = {r: {"accent": "#00b7ff", "font": "#ffffff"} for r in ["Zerg", "Protoss", "Terran"]}
+        self.overlay_buttons_locked = False
+        self.initial_delay = 0
+        self._countdown_timer: Optional[QTimer] = None
+        self._countdown_remaining = 0
+        self.race_colors: Dict[str, dict] = {r: {"accent": "#00b7ff", "font": "#ffffff"} for r in self.races}
         self.resize(max(120, self.bw + 26), 420)
 
         default_actions = self.defaults()
@@ -860,7 +1068,7 @@ class Main(QMainWindow):
         root = QWidget(); self.setCentralWidget(root)
         lay = QVBoxLayout(root); lay.setContentsMargins(6, 6, 6, 6); lay.setSpacing(5)
         self.tabs = DragTabBar()
-        [self.tabs.addTab(r) for r in self.races]
+        [self.tabs.addTab(n) for n in self.tab_names]
         self.tabs.setExpanding(True)
         self.tabs.setUsesScrollButtons(False)
         self.tabs.setDrawBase(False)
@@ -880,8 +1088,8 @@ class Main(QMainWindow):
         top.setContentsMargins(0, 0, 0, 0)
         top.setSpacing(2)
         self.hide_btn = DragBtn(""); self.hide_btn.clicked.connect(self.enter_overlay)
-        self.settings_btn = DragBtn(""); self.settings_btn.setToolTip("Open settings panel\nConfigure alarms, voice, appearance, and builds"); self.settings_btn.clicked.connect(self.open_settings)
-        self.start_btn = DragBtn(""); self.start_btn.setToolTip("Start all alarms for the current race and build"); self.start_btn.clicked.connect(self.toggle_start_stop)
+        self.settings_btn = DragBtn(""); self.settings_btn.clicked.connect(self.open_settings)
+        self.start_btn = DragBtn(""); self.start_btn.clicked.connect(self.toggle_start_stop)
         self.top_row = top
         top.addWidget(self.hide_btn); top.addWidget(self.start_btn); top.addWidget(self.settings_btn)
         top_wrap_l.addLayout(top)
@@ -916,6 +1124,7 @@ class Main(QMainWindow):
             return
         if self.active_build.get(race) == name:
             return
+        self._cancel_countdown()
         self.stop_all()
         self.active_build[race] = name
         self._sync_actions_from_builds()
@@ -975,8 +1184,65 @@ class Main(QMainWindow):
         self.rebuild_overlay()
         self.save_timer.start(200)
 
+    def set_overlay_buttons_locked(self, locked: bool):
+        self.overlay_buttons_locked = locked
+        if self.ov:
+            for b in self.ov.btns.values():
+                b.setEnabled(not locked)
+        self.save_timer.start(200)
+
+    def set_initial_delay(self, v: int):
+        self.initial_delay = max(0, int(v))
+        self.save_timer.start(200)
+
+    def open_tabs_dialog(self):
+        self._tabs_dlg = TabsDialog(self)
+        self._tabs_dlg.show(); self._tabs_dlg.raise_(); self._tabs_dlg.activateWindow()
+
+    def apply_tab_config(self, new_races: List[str], new_names: List[str], new_abbrevs: List[str]):
+        if not new_races:
+            return
+        self._cancel_countdown()
+        for aid in list(self.timers.keys()):
+            self.stop(aid)
+        for r in [r for r in self.races if r not in new_races]:
+            self.builds.pop(r, None); self.actions.pop(r, None)
+            self.race_colors.pop(r, None); self.active_build.pop(r, None)
+        for r in new_races:
+            if r not in self.builds:
+                self.builds[r] = [{"name": "Default", "actions": []}]
+            if r not in self.active_build:
+                self.active_build[r] = "Default"
+            if r not in self.race_colors:
+                self.race_colors[r] = {"accent": "#00b7ff", "font": "#ffffff"}
+        self.races = new_races
+        self.tab_names = new_names
+        self.tab_abbrevs = new_abbrevs
+        if self.active_race not in self.races:
+            self.active_race = self.races[0]
+        self._sync_actions_from_builds()
+        self.tabs.blockSignals(True)
+        while self.tabs.count():
+            self.tabs.removeTab(0)
+        for name in self.tab_names:
+            self.tabs.addTab(name)
+        self.tabs.setCurrentIndex(self.races.index(self.active_race))
+        self.tabs.blockSignals(False)
+        rc = self.race_colors.get(self.active_race, {})
+        self.accent_color = rc.get("accent", self.accent_color)
+        self.font_color = rc.get("font", self.font_color)
+        self._refresh_build_combo()
+        self.apply_theme(); self.apply_btn_style()
+        self.rebuild_main(); self.rebuild_overlay()
+        if self.sw and self.sw.isVisible():
+            self.sw.refresh()
+        self.update_start_stop_ui()
+        self.update_compact_controls()
+        self.save_timer.start(200)
+
     def tray(self):
         icon = QIcon(rp("icon.ico")) if os.path.exists(rp("icon.ico")) else QApplication.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
+        self.icon = icon
         self.setWindowIcon(icon); self.tr = QSystemTrayIcon(icon, self); self.tr.activated.connect(self.tr_activated)
         m = QMenu(); a1 = QAction("Open", self); a1.triggered.connect(self.restore); a2 = QAction("Hide GUI", self); a2.triggered.connect(self.enter_overlay); a3 = QAction("Quit", self); a3.triggered.connect(self.quit)
         m.addAction(a1); m.addAction(a2); m.addSeparator(); m.addAction(a3); self.tr.setContextMenu(m)
@@ -1069,7 +1335,11 @@ class Main(QMainWindow):
             x = dict(a)
             x["name"] = self._action_display_name(a, a["id"])
             vis.append(x)
-        self.ov.set_align(self.arrow_align); self.ov.rebuild(vis, list(self.timers.keys()), self.bw, self.bh, self.fs, self.btn_gap); self.update_start_stop_ui()
+        self.ov.set_align(self.arrow_align)
+        self.ov.rebuild(vis, list(self.timers.keys()), self.bw, self.bh, self.fs, self.btn_gap)
+        for b in self.ov.btns.values():
+            b.setEnabled(not self.overlay_buttons_locked)
+        self.update_start_stop_ui()
 
     def apply_btn_style(self):
         c = self.accent_color
@@ -1230,8 +1500,49 @@ class Main(QMainWindow):
     def start_all(self):
         if self.sw and self.sw.isVisible():
             self.sync_settings_time_values()
+        if self.initial_delay > 0:
+            self._begin_countdown(self.initial_delay)
+        else:
+            self._start_all_immediate()
+
+    def _start_all_immediate(self):
         for a in self.actions[self.active_race]:
             self.start_with_initial_delay(a)
+
+    def _begin_countdown(self, seconds: int):
+        self._cancel_countdown()
+        self._countdown_remaining = seconds
+        self._countdown_timer = QTimer(self)
+        self._countdown_timer.timeout.connect(self._countdown_tick)
+        self._countdown_timer.start(1000)
+        self._update_countdown_ui()
+
+    def _countdown_tick(self):
+        self._countdown_remaining -= 1
+        if self._countdown_remaining <= 0:
+            self._countdown_remaining = 0
+            if self._countdown_timer:
+                self._countdown_timer.stop()
+                self._countdown_timer.deleteLater()
+                self._countdown_timer = None
+            self._start_all_immediate()
+        else:
+            self._update_countdown_ui()
+
+    def _update_countdown_ui(self):
+        txt = str(self._countdown_remaining)
+        self.start_btn.setText(txt)
+        if self.ov:
+            self.ov.play.setText(txt)
+
+    def _cancel_countdown(self):
+        if self._countdown_timer:
+            self._countdown_timer.stop()
+            self._countdown_timer.deleteLater()
+            self._countdown_timer = None
+        if self._countdown_remaining > 0:
+            self._countdown_remaining = 0
+            self.update_start_stop_ui()
 
     def sync_settings_time_values(self):
         if not self.sw:
@@ -1254,6 +1565,7 @@ class Main(QMainWindow):
             a["time_expr"] = raw
 
     def stop_all(self):
+        self._cancel_countdown()
         self.overlay_hidden_ids.clear()
         for a in list(self.actions[self.active_race]): self.stop(a["id"])
         self.rebuild_overlay()
@@ -1261,18 +1573,25 @@ class Main(QMainWindow):
     def all_active(self) -> bool:
         acts = self.actions[self.active_race]; return len(acts) > 0 and all(a["id"] in self.timers for a in acts)
 
+    def any_active(self) -> bool:
+        return any(a["id"] in self.timers for a in self.actions[self.active_race])
+
     def toggle_start_stop(self):
-        if self.all_active(): self.stop_all()
-        else: self.start_all()
+        if self._countdown_remaining > 0:
+            self._cancel_countdown()
+        elif self.any_active():
+            self.stop_all()
+        else:
+            self.start_all()
         self.update_start_stop_ui()
 
     def update_start_stop_ui(self):
-        a = self.all_active()
-        self.start_btn.setToolTip("Stop all running alarms" if a else "Start all alarms for the\ncurrent race and build")
-        self.start_btn.setText("\u25A0" if a else "\u25B6")
+        if self._countdown_remaining > 0:
+            return
+        running = self.any_active()
+        self.start_btn.setText("\u25A0" if running else "\u25B6")
         if self.ov:
-            self.ov.play.setToolTip("Stop all running alarms" if a else "Start all alarms for the\ncurrent race and build")
-            self.ov.update_icons(a)
+            self.ov.update_icons(running)
 
     def update_control_icons(self):
         self.hide_btn.setText("\uE70D")
@@ -1285,7 +1604,7 @@ class Main(QMainWindow):
         n = max(1, self.tabs.count())
         tab_w = max(12, int(avail / n))
         short = tab_w < 72
-        labels = ["Z", "P", "T"] if short and n == 3 else self.races
+        labels = self.tab_abbrevs if short else self.tab_names
         for i in range(min(n, len(labels))):
             if self.tabs.tabText(i) != labels[i]:
                 self.tabs.setTabText(i, labels[i])
@@ -1343,6 +1662,7 @@ class Main(QMainWindow):
 
     def race_changed(self, i: int):
         if 0 <= i < len(self.races):
+            self._cancel_countdown()
             old_race = self.active_race
             self.race_colors[old_race] = {"accent": self.accent_color, "font": self.font_color}
             self.active_race = self.races[i]
@@ -1457,7 +1777,7 @@ class Main(QMainWindow):
 
     def changeEvent(self, e):
         if e.type() == e.Type.WindowStateChange and self.isMinimized() and self.min_to_tray:
-            QTimer.singleShot(0, self.hide); self.tr.isVisible() and self.tr.showMessage("Macro Reminders", "Running in system tray.", QSystemTrayIcon.MessageIcon.Information, 900)
+            QTimer.singleShot(0, self.hide); self.tr.isVisible() and self.tr.showMessage("MacroHelper", "Running in system tray.", QSystemTrayIcon.MessageIcon.Information, 900)
         super().changeEvent(e)
 
     def closeEvent(self, e):
@@ -1503,6 +1823,26 @@ class Main(QMainWindow):
                 for r in self.races:
                     self.race_colors[r] = {"accent": self.accent_color, "font": self.font_color}
             self.include_build_in_overlay = bool(c.get("include_build_in_overlay", False))
+            self.overlay_buttons_locked = bool(c.get("overlay_buttons_locked", False))
+            self.initial_delay = int(c.get("initial_delay", 0))
+            saved_races = c.get("races")
+            if isinstance(saved_races, list) and saved_races:
+                self.races = [str(r).strip() for r in saved_races if str(r).strip()]
+                raw_names = c.get("tab_names", [])
+                self.tab_names = [str(n) for n in raw_names] if isinstance(raw_names, list) and len(raw_names) == len(self.races) else list(self.races)
+                raw_abbrevs = c.get("tab_abbrevs", [])
+                self.tab_abbrevs = [str(a) for a in raw_abbrevs] if isinstance(raw_abbrevs, list) and len(raw_abbrevs) == len(self.races) else [n[:1] for n in self.tab_names]
+                self.tabs.blockSignals(True)
+                while self.tabs.count():
+                    self.tabs.removeTab(0)
+                for name in self.tab_names:
+                    self.tabs.addTab(name)
+                self.tabs.blockSignals(False)
+                rc2 = c.get("race_colors", {})
+                for r in self.races:
+                    if r not in self.race_colors:
+                        entry = rc2.get(r, {}) if isinstance(rc2, dict) else {}
+                        self.race_colors[r] = {"accent": str(entry.get("accent", "#00b7ff")), "font": str(entry.get("font", "#ffffff"))}
             ww = int(c.get("window_width", self.width()))
             wh = int(c.get("window_height", self.height()))
             self.resize(max(120, ww), max(180, wh))
@@ -1545,6 +1885,10 @@ class Main(QMainWindow):
             self._refresh_build_combo()
             self.apply_theme(); self.apply_font(); self.rebuild_main()
             self.update_start_stop_ui()
+            if self.min_to_tray:
+                self.tr.show()
+            else:
+                self.tr.hide()
         except Exception as ex:
             print(f"Error loading config: {ex}")
 
@@ -1561,6 +1905,11 @@ class Main(QMainWindow):
             "voice_rate": self.voice_rate, "voice_rate_rand": self.voice_rate_rand, "voice_id": self.voice_id, "arrow_align": self.arrow_align, "minimize_to_tray": self.min_to_tray, "button_gap": self.btn_gap, "accent_color": self.accent_color, "font_color": self.font_color,
             "race_colors": self.race_colors,
             "include_build_in_overlay": self.include_build_in_overlay,
+            "overlay_buttons_locked": self.overlay_buttons_locked,
+            "initial_delay": self.initial_delay,
+            "races": self.races,
+            "tab_names": self.tab_names,
+            "tab_abbrevs": self.tab_abbrevs,
             "active_race": self.active_race,
             "builds_by_race": builds_data,
             "active_build_by_race": dict(self.active_build),

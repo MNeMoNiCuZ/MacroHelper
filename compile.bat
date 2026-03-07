@@ -22,12 +22,12 @@ pyinstaller ^
   --name sc2_alarm_app ^
   --icon icon.ico ^
   --add-data "icon.ico;." ^
-  main.py
+  app.py
 
 if errorlevel 1 (
   echo [ERROR] Build failed.
   exit /b 1
 )
 
-echo [OK] Build complete: dist\sc2_alarm_app.exe
+echo [OK] Build complete: dist\MacroHelper.exe
 endlocal
