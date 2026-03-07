@@ -1,7 +1,7 @@
 {
   "pos": [
-    1912,
-    791
+    1914,
+    740
   ],
   "volume": 0.59,
   "font_size": 21,
@@ -9,7 +9,7 @@
   "button_height": 33,
   "window_width": 120,
   "window_height": 300,
-  "voice_rate": 262,
+  "voice_rate": 233,
   "voice_rate_rand": 75,
   "voice_id": "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\Voices\\Tokens\\TTS_MS_EN-GB_HAZEL_11.0",
   "arrow_align": "right",
@@ -224,10 +224,10 @@
             "name_parts": [
               "Pylon"
             ],
-            "spoken": "Pylon",
-            "spoken_expr": "Pylon",
+            "spoken": "Pilon",
+            "spoken_expr": "Pilon",
             "spoken_parts": [
-              "Pylon"
+              "Pilon"
             ],
             "interval": 20,
             "initial_delays": [
@@ -243,10 +243,10 @@
             "name_parts": [
               "Chrono"
             ],
-            "spoken": "Chrono Boot",
-            "spoken_expr": "Chrono Boot",
+            "spoken": "Chrono Boost",
+            "spoken_expr": "Chrono Boost",
             "spoken_parts": [
-              "Chrono Boot"
+              "Chrono Boost"
             ],
             "interval": 60,
             "initial_delays": [],
@@ -324,10 +324,10 @@
             "name_parts": [
               "Warpgate"
             ],
-            "spoken": "Warpgate",
-            "spoken_expr": "Warpgate",
+            "spoken": "Warp gate",
+            "spoken_expr": "Warp gate",
             "spoken_parts": [
-              "Warpgate"
+              "Warp gate"
             ],
             "interval": 120,
             "initial_delays": [
@@ -386,10 +386,10 @@
             "name_parts": [
               "Supply"
             ],
-            "spoken": "Supply Deeepot",
-            "spoken_expr": "Supply Deeepot",
+            "spoken": "Supply Deepo",
+            "spoken_expr": "Supply Deepo",
             "spoken_parts": [
-              "Supply Deeepot"
+              "Supply Deepo"
             ],
             "interval": 20,
             "initial_delays": [

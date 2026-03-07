@@ -19,7 +19,7 @@ pyinstaller ^
   --clean ^
   --onefile ^
   --windowed ^
-  --name sc2_alarm_app ^
+  --name MacroHelper ^
   --icon icon.ico ^
   --add-data "icon.ico;." ^
   app.py
