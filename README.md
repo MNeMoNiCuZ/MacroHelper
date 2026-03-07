@@ -1,6 +1,8 @@
-# SC2 Macro Helper
+# Macro Helper Tool
 
-A lightweight StarCraft II macro reminder tool that uses text-to-speech to call out timed alerts for recurring tasks like building workers, injecting larvae, dropping MULEs, and more.
+A lightweight macro reminder tool that uses text-to-speech to call out timed alerts for recurring tasks like building workers and other repetitive tasks that you need some help to drill into your memory routines.
+
+It's tailored for Starcraft 2, but could be adapted to be more generic with a little bit of effort.
 
 ## Features
 
