@@ -285,47 +285,30 @@ class DragTabBar(QTabBar):
         super().mouseReleaseEvent(e)
 
 
-class Overlay(QWidget):
+class OverlayBar(QWidget):
+    """Small interactive toolbar for overlay (PLAY + close). Separate window so the
+    display-only Overlay can be fully click-through."""
     restore = pyqtSignal()
-    toggled = pyqtSignal(str, bool)
     start_stop = pyqtSignal()
-    build_changed = pyqtSignal(str)
 
     def __init__(self):
-        super().__init__(None, Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        super().__init__(None, Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool | Qt.WindowType.WindowDoesNotAcceptFocus)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        self.btns: Dict[str, DragBtn] = {}
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+        self._overlay: 'Overlay | None' = None
 
-        root = QVBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(4)
-
-        self.top = QHBoxLayout()
+        self.top = QHBoxLayout(self)
         self.top.setContentsMargins(0, 0, 0, 0)
         self.top.setSpacing(4)
         self.up = DragBtn("")
         self.up.clicked.connect(self.restore.emit)
         self.play = DragBtn("")
         self.play.clicked.connect(self.start_stop.emit)
-        root.addLayout(self.top)
-
-        self.build_combo = QComboBox()
-        self.build_combo.currentTextChanged.connect(self._on_build_changed)
-        self.build_combo.setVisible(False)
-        root.addWidget(self.build_combo)
-
-        self.host = QWidget()
-        self.lay = QVBoxLayout(self.host)
-        self.lay.setContentsMargins(0, 0, 0, 0)
-        self.lay.setSpacing(4)
-        root.addWidget(self.host)
-
         self.set_align("left")
         self.update_icons(False)
 
-    def _on_build_changed(self, text):
-        if text:
-            self.build_changed.emit(text)
+    def link_overlay(self, ov: 'Overlay'):
+        self._overlay = ov
 
     def set_align(self, side: str):
         while self.top.count():
@@ -343,6 +326,115 @@ class Overlay(QWidget):
     def update_icons(self, running: bool):
         self.up.setText("\uE70E")
         self.play.setText("\u25A0" if running else "\u25B6")
+
+    def apply_styles(self, w: int, h: int, fs: int):
+        ac = self.property("accent_color") or "#00b7ff"
+        fc = self.property("font_color") or "#ffffff"
+        s = (
+            f"QPushButton{{font-size:{max(11, fs-1)}px;font-weight:700;color:{fc};background:#2d313a;"
+            f"border:1px solid {ac};border-radius:6px;padding:0px;text-align:center;}}"
+            f"QPushButton:hover{{background:#3b404c;}}"
+            f"QPushButton:checked{{background:{ac};border:2px solid {ac};}}"
+        )
+        play_s = (
+            f"QPushButton{{font-size:{max(11, fs-1)}px;font-weight:700;color:{fc};background:#2d313a;"
+            f"border:1px solid {ac};border-radius:6px;padding:0px;text-align:center;}}"
+            f"QPushButton:hover{{background:#3b404c;}}"
+        )
+        gap = self.top.spacing()
+        total_w = max(20, int(w))
+        half_l = max(10, (total_w - gap) // 2)
+        half_r = max(10, total_w - gap - half_l)
+        self.up.setFixedSize(half_l, h)
+        self.play.setFixedSize(half_r, h)
+        icon_font = max(7, min(int(h * 0.62), int(min(half_l, half_r) * 0.72)))
+        play_icon_font = max(9, int(icon_font * 1.35))
+        self.up.setStyleSheet(s + f"QPushButton{{font-family:'Segoe MDL2 Assets';font-size:{icon_font}px;}}")
+        self.play.setStyleSheet(play_s + f"QPushButton{{font-size:{play_icon_font}px;}}")
+        self.adjustSize()
+
+    def moveEvent(self, event):
+        super().moveEvent(event)
+        if self._overlay and self._overlay.isVisible():
+            self._overlay.move(self.x(), self.y() + self.height() + 4)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        QTimer.singleShot(0, self._apply_noactivate)
+
+    def _apply_noactivate(self):
+        try:
+            import ctypes
+            GWL_EXSTYLE = -20
+            WS_EX_NOACTIVATE = 0x08000000
+            hwnd = int(self.winId())
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_NOACTIVATE)
+        except Exception:
+            pass
+
+
+class Overlay(QWidget):
+    """Overlay for action buttons. Click-through when locked, interactive when unlocked."""
+    restore = pyqtSignal()
+    toggled = pyqtSignal(str, bool)
+    start_stop = pyqtSignal()
+    build_changed = pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__(None, Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool | Qt.WindowType.WindowDoesNotAcceptFocus)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+        self.btns: Dict[str, DragBtn] = {}
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(4)
+
+        self.top = QHBoxLayout()
+        self.top.setContentsMargins(0, 0, 0, 0)
+        self.top.setSpacing(4)
+        self.up = DragBtn("")
+        self.up.clicked.connect(self.restore.emit)
+        self.play = DragBtn("")
+        self.play.clicked.connect(self.start_stop.emit)
+        self.top_widget = QWidget()
+        self.top_widget.setLayout(self.top)
+        root.addWidget(self.top_widget)
+        self.set_align("left")
+        self.update_icons(False)
+
+        self.build_combo = QComboBox()
+        self.build_combo.currentTextChanged.connect(self._on_build_changed)
+        self.build_combo.setVisible(False)
+        root.addWidget(self.build_combo)
+
+        self.host = QWidget()
+        self.lay = QVBoxLayout(self.host)
+        self.lay.setContentsMargins(0, 0, 0, 0)
+        self.lay.setSpacing(4)
+        root.addWidget(self.host)
+
+    def set_align(self, side: str):
+        while self.top.count():
+            it = self.top.takeAt(0)
+            w = it.widget()
+            if w:
+                w.setParent(None)
+        if side == "right":
+            self.top.addWidget(self.play)
+            self.top.addWidget(self.up)
+        else:
+            self.top.addWidget(self.up)
+            self.top.addWidget(self.play)
+
+    def update_icons(self, running: bool):
+        self.up.setText("\uE70E")
+        self.play.setText("\u25A0" if running else "\u25B6")
+
+    def _on_build_changed(self, text):
+        if text:
+            self.build_changed.emit(text)
 
     def update_builds(self, build_names: List[str], active: str, show: bool):
         self.build_combo.blockSignals(True)
@@ -371,12 +463,10 @@ class Overlay(QWidget):
             f"border:1px solid {ac};border-radius:6px;padding:0px;text-align:center;}}"
             f"QPushButton:hover{{background:#3b404c;}}"
         )
-        self.up.setStyleSheet(s)
-        self.play.setStyleSheet(play_s)
-        gap = self.top.spacing()
         total_w = max(20, int(w))
-        half_l = max(10, (total_w - gap) // 2)
-        half_r = max(10, total_w - gap - half_l)
+        top_gap = self.top.spacing()
+        half_l = max(10, (total_w - top_gap) // 2)
+        half_r = max(10, total_w - top_gap - half_l)
         self.up.setFixedSize(half_l, h)
         self.play.setFixedSize(half_r, h)
         icon_font = max(7, min(int(h * 0.62), int(min(half_l, half_r) * 0.72)))
@@ -423,6 +513,39 @@ class Overlay(QWidget):
             b.blockSignals(True)
             b.setChecked(aid in active)
             b.blockSignals(False)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        QTimer.singleShot(0, lambda: self.set_clickthrough(self._clickthrough))
+
+    _clickthrough: bool = True
+
+    def set_clickthrough(self, on: bool):
+        self._clickthrough = on
+        flags = self.windowFlags()
+        if on:
+            flags |= Qt.WindowType.WindowDoesNotAcceptFocus
+        else:
+            flags &= ~Qt.WindowType.WindowDoesNotAcceptFocus
+        was_visible = self.isVisible()
+        self.setWindowFlags(flags)
+        if was_visible:
+            self.show()
+        try:
+            import ctypes
+            GWL_EXSTYLE = -20
+            WS_EX_NOACTIVATE = 0x08000000
+            WS_EX_TRANSPARENT = 0x00000020
+            WS_EX_LAYERED = 0x00080000
+            hwnd = int(self.winId())
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            if on:
+                style |= WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_LAYERED
+            else:
+                style &= ~(WS_EX_NOACTIVATE | WS_EX_TRANSPARENT)
+            ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+        except Exception:
+            pass
 
 
 TOOLTIP_STYLE = """
@@ -1024,7 +1147,7 @@ class Main(QMainWindow):
 
         self.timers: Dict[str, QTimer] = {}; self.timer_meta: Dict[str, dict] = {}; self.main_btns: Dict[str, QPushButton] = {}
         self.overlay_hidden_ids: set[str] = set()
-        self.ov: Optional[Overlay] = None; self.sw: Optional[SettingsWin] = None
+        self.ov: Optional[Overlay] = None; self.ov_bar: Optional[OverlayBar] = None; self.sw: Optional[SettingsWin] = None
         self.cfg_dir = app_dir(); self.cfg = os.path.join(self.cfg_dir, "config.json")
         self.save_timer = QTimer(self); self.save_timer.setSingleShot(True); self.save_timer.timeout.connect(self.save)
         self.progress_timer = QTimer(self); self.progress_timer.timeout.connect(self.refresh_progress_styles); self.progress_timer.start(120)
@@ -1186,9 +1309,21 @@ class Main(QMainWindow):
 
     def set_overlay_buttons_locked(self, locked: bool):
         self.overlay_buttons_locked = locked
-        if self.ov:
-            for b in self.ov.btns.values():
-                b.setEnabled(not locked)
+        if self.ov and self.ov.isVisible():
+            self.ov.set_clickthrough(locked)
+            if locked:
+                self.ov.top_widget.hide()
+                if self.ov_bar:
+                    self.ov_bar.move(self.ov.pos())
+                    self.ov.move(self.ov.x(), self.ov.y() + self.ov_bar.height() + 4)
+                    self.ov_bar.show(); self.ov_bar.raise_()
+            else:
+                self.ov.top_widget.show()
+                if self.ov_bar:
+                    pos = self.ov_bar.pos()
+                    self.ov_bar.hide()
+                    self.ov.move(pos)
+                self.ov.adjustSize()
         self.save_timer.start(200)
 
     def set_initial_delay(self, v: int):
@@ -1337,8 +1472,11 @@ class Main(QMainWindow):
             vis.append(x)
         self.ov.set_align(self.arrow_align)
         self.ov.rebuild(vis, list(self.timers.keys()), self.bw, self.bh, self.fs, self.btn_gap)
-        for b in self.ov.btns.values():
-            b.setEnabled(not self.overlay_buttons_locked)
+        if self.ov_bar:
+            self.ov_bar.setProperty("accent_color", self.accent_color)
+            self.ov_bar.setProperty("font_color", self.font_color)
+            self.ov_bar.set_align(self.arrow_align)
+            self.ov_bar.apply_styles(self.bw, self.bh, self.fs)
         self.update_start_stop_ui()
 
     def apply_btn_style(self):
@@ -1366,6 +1504,10 @@ class Main(QMainWindow):
         )
         self.build_combo.setStyleSheet(combo_s)
         if self.ov: self.ov.apply_styles(self.bw, self.bh, self.fs, self.btn_gap)
+        if self.ov_bar:
+            self.ov_bar.setProperty("accent_color", self.accent_color)
+            self.ov_bar.setProperty("font_color", self.font_color)
+            self.ov_bar.apply_styles(self.bw, self.bh, self.fs)
         self.refresh_progress_styles(); self.update_start_stop_ui(); self.update_compact_controls()
 
     def _inactive_style(self) -> str:
@@ -1532,6 +1674,8 @@ class Main(QMainWindow):
     def _update_countdown_ui(self):
         txt = str(self._countdown_remaining)
         self.start_btn.setText(txt)
+        if self.ov_bar:
+            self.ov_bar.play.setText(txt)
         if self.ov:
             self.ov.play.setText(txt)
 
@@ -1590,6 +1734,8 @@ class Main(QMainWindow):
             return
         running = self.any_active()
         self.start_btn.setText("\u25A0" if running else "\u25B6")
+        if self.ov_bar:
+            self.ov_bar.update_icons(running)
         if self.ov:
             self.ov.update_icons(running)
 
@@ -1720,15 +1866,41 @@ class Main(QMainWindow):
             self.ov.toggled.connect(self.toggle)
             self.ov.start_stop.connect(self.toggle_start_stop)
             self.ov.build_changed.connect(self.switch_build)
+        if self.ov_bar is None:
+            self.ov_bar = OverlayBar()
+            self.ov_bar.link_overlay(self.ov)
+            self.ov_bar.restore.connect(self.exit_overlay)
+            self.ov_bar.start_stop.connect(self.toggle_start_stop)
+        locked = self.overlay_buttons_locked
+        self.ov._clickthrough = locked
         self.rebuild_overlay()
-        self.ov.move(clamp_window_pos(self.pos(), self.ov.width(), self.ov.height()))
-        self.hide(); self.ov.show(); self.ov.raise_(); self.ov.activateWindow()
+        pos = clamp_window_pos(self.pos(), self.ov.width(), self.ov.height())
+        if locked:
+            self.ov_bar.move(pos)
+            self.ov.move(pos.x(), pos.y() + self.ov_bar.height() + 4)
+            self.ov.top_widget.hide()
+        else:
+            self.ov.move(pos)
+            self.ov.top_widget.show()
+        self.hide()
+        self.ov.show(); self.ov.raise_()
+        if locked:
+            self.ov_bar.show(); self.ov_bar.raise_()
+        else:
+            self.ov_bar.hide()
         fit_window_to_screen(self.ov)
 
     def exit_overlay(self):
+        pos = None
+        if self.ov_bar and self.ov_bar.isVisible():
+            pos = self.ov_bar.pos()
+            self.ov_bar.hide()
         if self.ov:
-            self.move(self.ov.pos())
+            if pos is None:
+                pos = self.ov.pos()
             self.ov.hide()
+        if pos:
+            self.move(pos)
         self.showNormal(); self.show(); self.raise_(); self.activateWindow()
         fit_window_to_screen(self)
 
@@ -1769,11 +1941,13 @@ class Main(QMainWindow):
         if r in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick): self.restore()
 
     def restore(self):
-        if self.ov and self.ov.isVisible(): self.ov.show(); self.ov.raise_(); self.ov.activateWindow()
+        if self.ov and self.ov.isVisible():
+            self.ov.show(); self.ov.raise_()
+            if self.ov_bar: self.ov_bar.show(); self.ov_bar.raise_()
         else: self.showNormal(); self.show(); self.raise_(); self.activateWindow()
 
     def quit(self):
-        self.quitting = True; self.tr.hide(); self.ov and self.ov.close(); self.sw and self.sw.close(); self.close()
+        self.quitting = True; self.tr.hide(); self.ov and self.ov.close(); self.ov_bar and self.ov_bar.close(); self.sw and self.sw.close(); self.close()
 
     def changeEvent(self, e):
         if e.type() == e.Type.WindowStateChange and self.isMinimized() and self.min_to_tray:
@@ -1781,7 +1955,7 @@ class Main(QMainWindow):
         super().changeEvent(e)
 
     def closeEvent(self, e):
-        self.quitting = True; self.save(); self.tr.hide(); self.ov and self.ov.close(); self.sw and self.sw.close(); e.accept()
+        self.quitting = True; self.save(); self.tr.hide(); self.ov and self.ov.close(); self.ov_bar and self.ov_bar.close(); self.sw and self.sw.close(); e.accept()
         QApplication.instance().quit()
 
     def _parse_actions_list(self, raw_list: list) -> list:
