@@ -792,6 +792,21 @@ class SettingsWin(QWidget):
         add.setToolTip("Add a new alarm with the settings\nentered in the fields to the left")
         ar.addWidget(self.n, 3); ar.addWidget(self.say, 3); ar.addWidget(self.sec, 3); ar.addWidget(add)
         root.addLayout(ar)
+        
+        # New Import row
+        import_ar = QHBoxLayout()
+        import_ar.setSpacing(4)
+        self.import_input = QLineEdit()
+        self.import_input.setPlaceholderText("Paste build order here (e.g. 0:00 12 SCV, 0:36 14 Depot)")
+        self.import_input.setMinimumHeight(add_input_h)
+        import_btn = DragBtn("Auto-Fill")
+        import_btn.setMinimumHeight(add_input_h)
+        import_btn.setToolTip("Auto-fill Button Name, Spoken Text, and Time from a pasted build order")
+        import_btn.clicked.connect(self.import_build)
+        import_ar.addWidget(self.import_input, 1)
+        import_ar.addWidget(import_btn)
+        root.addLayout(import_ar)
+        
         self.voice_refresh_timer = QTimer(self); self.voice_refresh_timer.timeout.connect(self.refresh_voice_list); self.voice_refresh_timer.start(4000)
         self.refresh()
 
@@ -893,9 +908,10 @@ class SettingsWin(QWidget):
             self.tbl.setItem(r, 1, spoken_item)
 
             delays = [int(x) for x in a.get("initial_delays", []) if int(x) >= 0]
-            vals = [str(x) for x in delays] + [str(a["interval"])]
             if a.get("terminal_zero", False):
-                vals.append("0")
+                vals = [str(x) for x in delays] + ["0"]
+            else:
+                vals = [str(x) for x in delays] + [str(a["interval"])]
             time_text = ",".join(vals) if vals else str(a["interval"])
             it = QTableWidgetItem(time_text)
             desc = format_time_description(a.get("time_expr", time_text))
@@ -934,9 +950,11 @@ class SettingsWin(QWidget):
             try:
                 dly, interval, terminal = parse_time_expr(raw)
             except Exception:
-                vals = [str(x) for x in a.get("initial_delays", [])] + [str(a["interval"])]
+                vals = [str(x) for x in a.get("initial_delays", [])]
                 if a.get("terminal_zero", False):
                     vals.append("0")
+                else:
+                    vals.append(str(a["interval"]))
                 cur = ",".join(vals) if vals else str(a["interval"])
                 self.upd = True; self.tbl.item(r, 2).setText(cur); self.upd = False; return
             a["interval"] = interval; a["initial_delays"] = dly; a["terminal_zero"] = terminal; a["time_expr"] = raw; self.m.restart_if_active(aid)
@@ -948,6 +966,44 @@ class SettingsWin(QWidget):
         spoken = (self.say.text() or n).strip()
         raw = (self.sec.text() or "").strip()
         self.m.add_action(n, spoken, raw); self.n.clear(); self.say.clear(); self.sec.setText("120"); self.refresh()
+
+    def import_build(self):
+        text = self.import_input.text().strip()
+        if not text: return
+        elements = [e.strip() for e in re.split(r'[,;\n]+', text) if e.strip()]
+        
+        pattern = re.compile(r'(\d+:\d{2})\s*(?:(\d+)\s+)?(.*)')
+        
+        last_seconds = 0
+        intervals = []
+        names = []
+        
+        for element in elements:
+            m = pattern.search(element)
+            if m:
+                time_str = m.group(1)
+                action = m.group(3).strip()
+                
+                parts = time_str.split(':')
+                if len(parts) == 2:
+                    sec = int(parts[0]) * 60 + int(parts[1])
+                else:
+                    sec = int(time_str)
+                    
+                delay = max(0, sec - last_seconds)
+                
+                intervals.append(str(delay))
+                names.append(action)
+                last_seconds = sec
+                
+        if intervals:
+            intervals.append("0")
+            self.n.setText(", ".join(names))
+            self.say.setText(", ".join(names))
+            self.sec.setText(", ".join(intervals))
+            self.import_input.clear()
+        else:
+            QMessageBox.warning(self, "Parse Error", "Could not parse build order. Expected format like: 0:00 12 SCV")
 
     def rm(self, aid: str):
         self.m.remove_action(aid); self.refresh()
@@ -1826,7 +1882,6 @@ class Main(QMainWindow):
             self.update_start_stop_ui(); self.save_timer.start(200)
 
     def add_action(self, name: str, spoken: str, time_expr: str):
-        if any(a["name"].lower() == name.lower() for a in self.actions[self.active_race]): QMessageBox.warning(self, "Duplicate", f"'{name}' already exists in {self.active_race}."); return
         try:
             dly, sec, terminal = parse_time_expr(time_expr)
         except Exception:

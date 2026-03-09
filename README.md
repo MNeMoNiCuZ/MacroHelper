@@ -7,7 +7,7 @@ It's tailored for Starcraft 2, but could be adapted to be more generic with a li
 ## Features
 
 - **Race-specific presets** — Built-in timers for Zerg, Protoss, and Terran macro tasks
-- **Custom actions** — Create your own reminders with flexible timing expressions (initial delays, repeating intervals, finite sequences)
+- **Custom actions (includes Paste function)** — Create your own reminders with flexible timing expressions (initial delays, repeating intervals, finite sequences)
 - **Build profiles** — Save and switch between multiple build-specific action sets per race
 - **Text-to-speech** — Spoken alerts with configurable voice, rate, volume, and randomization
 - **Compact overlay** — Frameless, always-on-top draggable window designed to sit alongside your game
