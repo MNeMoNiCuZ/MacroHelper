@@ -1,4 +1,4 @@
-# Macro Helper Tool
+# Macro Helper Tool 2
 
 A lightweight macro reminder tool that uses text-to-speech to call out timed alerts for recurring tasks like building workers and other repetitive tasks that you need some help to drill into your memory routines.
 
